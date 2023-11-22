@@ -168,3 +168,9 @@ evaluation*.json
 generations*.json
 
 playground/
+
+
+# Hojae
+*.ipynb
+*.csv
+*.swp
