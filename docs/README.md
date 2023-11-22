@@ -110,7 +110,7 @@ accelerate launch main.py \
 ```
 
 
-There is also a version to run the OpenAI API on HumanEvalPack at `bigcode_eval/tasks/humanevalpack_openai.py`. It requires the `openai` package that can be installed via `pip install openai`. You will need to set the environment variables `OPENAI_ORGANIZATION` and `OPENAI_API_KEY`. Then you may want to modify the global variables defined in the script, such as `LANGUAGE`. Finally, you can run it with `python bigcode_eval/tasks/humanevalpack_openai.py`.
+There is also a version to run the OpenAI API on HumanEvalPack at `lm_eval/tasks/humanevalpack_openai.py`. It requires the `openai` package that can be installed via `pip install openai`. You will need to set the environment variables `OPENAI_ORGANIZATION` and `OPENAI_API_KEY`. Then you may want to modify the global variables defined in the script, such as `LANGUAGE`. Finally, you can run it with `python lm_eval/tasks/humanevalpack_openai.py`.
 
 
 ### InstructHumanEval
@@ -142,7 +142,7 @@ for code completion
 accelerate launch  main.py \
   --model <MODEL_NAME> \
   --max_length_generation <MAX_LENGTH> \
-  --tasks instruct-humaneval \
+  --tasks instruction-humaneval \
   --instruction_tokens <user_token>,<end_token>,<assistant_token>\
   --temperature 0.2 \
   --n_samples 200 \
@@ -155,7 +155,7 @@ for docstring to code
 accelerate launch  main.py \
   --model <MODEL_NAME> \
   --max_length_generation <MAX_LENGTH> \
-  --tasks instruct-humaneval-nocontext \
+  --tasks instruction-humaneval-nocontext \
   --instruction_tokens <user_token>,<end_token>,<assistant_token>\
   --temperature 0.2 \
   --n_samples 200 \
@@ -193,7 +193,7 @@ Low temperatures generally work better for small $k$ in pass@k.
 ### DS-1000
 [DS-1000](https://ds1000-code-gen.github.io/): Code generation benchmark with 1000 data science questions spanning seven Python libraries that (1) reflects diverse, realistic, and practical use cases, (2) has a reliable metric, (3) defends against memorization by perturbing questions.
 
-The task can be specified as `--tasks ds1000-$SUBSET-$MODE`, where subset can include `all` libraries or any of the following subsets: `numpy`, `scipy`, `pandas`, `tensorflow`, `pytorch`, `sklearn`, `matplotlib`. Supported generation modes are `completion` (purely autoregressive) or `insertion` via fill-in-middle [FIM] (this mode now only supports InCoder and BigCode Models).
+The task can be specified as `--tasks ds1000-$SUBSET-$MODE`, where subset can include `all` libraries or any of the following subsets: `numpy`, `scipy`, `pandas`, `tensorflow`, `pytorch`, `sklearn`, `matplotlib`. Supported generation modes are `completion` (purely autoregressive) or `insertion` (via fill-in-middle [FIM]).
 
 - Prompts & Generation: prompts include partial code with one or more missing lines. The form of such prompts varies between `completion` and `insertion` modes (`[insert]` token used to reflect FIM region). Default generation args are reflected below.
 - Evaluation: generations are evaluated via execution of unit tests. As in the original manuscript, $pass@1$ is evaluated over each of `num_samples` and the mean pass rate is returned as the metric. Default evaluation args are presented below.
@@ -232,7 +232,7 @@ accelerate launch  main.py \
     --do_sample True  \
     --n_samples 200  \
     --batch_size 200  \
-    --trust_remote_code \
+    --trsut_remote_code \
     --generation_only \
     --save_generations \
     --save_generations_path generations_py.json
@@ -318,23 +318,6 @@ accelerate launch  main.py \
 We expect a model [finetuned](https://github.com/bigcode-project/bigcode-evaluation-harness/tree/main/finetuning/APPS) on the train split of APPS.
 TODO: add few-shot setup for APPS.
 
-### Recode
-[Recode](https://github.com/amazon-science/recode/tree/main) proposes a set of code and natural language transformations to evaluate the robustness of code-generation models. The perturbations can be applied to any code-generation benchmark. Specifically, they release perturbed versions of HumanEval and MBPP.
-
-For now, we support the perturbed version of the HumanEval benchmark.
-The task is specified with `--tasks perturbed-humaneval-{category}-num_seeds_{num_seeds}` where `category` can be one of `format`, `func_name`, `natgen`, `nlaugmenter`, and the number of seeds per perturbation is from `1` to `10`. The author's recommendation is to run with 5 seeds, with greedy generation.
-
-```python
-accelerate launch  main.py \
-  --model <MODEL_NAME> \
-  --max_length_generation 1024 \
-  --tasks <TASK> \
-  --batch_size 1 \
-  --do_sample False \
-  --n_samples 1 \
-  --allow_code_execution
-```
-
 
 ## Code generation benchmarks without unit tests
 
@@ -353,29 +336,6 @@ accelerate launch  main.py \
   --tasks <TASK> \
   --n_samples 1 \
   --temperature 0.1 \
-  --batch_size 1 
-```
-If you ever get index out-of-range errors try using a number of problems `limit` that is proportional to the number of devices you are using.
-
-### SantaCoder-FIM
-[SantaCoder-FIM](https://huggingface.co/datasets/bigcode/santacoder-fim-task): 4,792 tasks for FIM insertion described in [SantaCoder: don't reach for the stars!](https://arxiv.org/abs/2301.03988). The tasks are similar to other tasks without unit tests, with two key differences:
-1. Instead of BLEU Score, Exact Match is used to score the generations.
-2. Use zero-shot setting instead of 2-shot
-
-SantaCoder-FIM includes 2 tasks:
-- `StarCoderFIM`: which uses the default FIM tokens `"<fim_prefix>", "<fim_middle>", "<fim_suffix>"`, and
-- `SantaCoderFIM`: which uses SantaCoder FIM tokens `"<fim-prefix>", "<fim-middle>", "<fim-suffix>"`
-So depending on the FIM tokens used to train the model, you will need to select the appropriate task for evaluation.
-
-We only do single generation `n_samples=1`, and use the same generation settings as before.
-Below are the commands to run the evaluation:
-```python
-accelerate launch  main.py \
-  --model <MODEL_NAME> \
-  --max_length_generation <MAX_LENGTH> \
-  --tasks <TASK> \
-  --n_samples 1 \
-  --temperature 0.2 \
   --batch_size 1 
 ```
 If you ever get index out-of-range errors try using a number of problems `limit` that is proportional to the number of devices you are using.

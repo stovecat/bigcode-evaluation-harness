@@ -1,6 +1,6 @@
 import json
 
-from bigcode_eval import tasks
+from lm_eval import tasks
 
 TASKS = ["pal-gsm8k-greedy"]
 

@@ -174,3 +174,4 @@ playground/
 *.ipynb
 *.csv
 *.swp
+*.pkl
